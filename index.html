@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>e-Takwim Pengurusan SK Tudan 2027</title>
+    <meta name="description" content="Sistem perancangan, pengurusan, penyelarasan, semakan dan takwim tahunan SK Tudan Miri 2027 Kumpulan B." />
+    <meta property="og:title" content="e-Takwim Pengurusan SK Tudan 2027" />
+    <meta property="og:description" content="Sistem perancangan, pengurusan, penyelarasan, semakan dan takwim tahunan SK Tudan Miri 2027 Kumpulan B." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Catch and gracefully handle benign Vite HMR WebSocket disconnections in preview environment
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason) {
+          var msg = (event.reason.message || String(event.reason) || '');
+          var stack = (event.reason.stack || '');
+          if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('websocket') !== -1 || stack.indexOf('@vite/client') !== -1) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return false;
+          }
+        }
+      });
+      window.addEventListener('error', function(event) {
+        var msg = (event.message || '');
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('websocket') !== -1) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return false;
+        }
+      });
+    </script>
+  </head>
+  <body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900 min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

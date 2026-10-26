@@ -1,0 +1,6 @@
+{
+  "name": "e-Takwim Pengurusan SK Tudan 2027",
+  "description": "Sistem perancangan, pengurusan, penyelarasan, semakan dan takwim tahunan SK Tudan Miri 2027 Kumpulan B.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
