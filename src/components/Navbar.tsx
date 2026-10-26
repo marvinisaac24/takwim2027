@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Award
 } from 'lucide-react';
+import { FirebaseAuthButton } from './FirebaseAuthButton';
 
 interface NavbarProps {
   activeTab: string;
@@ -173,6 +174,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="hidden sm:inline font-semibold">Ketetapan</span>
               </button>
             )}
+
+            {/* Firebase Google Auth button */}
+            <FirebaseAuthButton />
 
             {/* Dynamic Role Switcher (strictly derived from Ketetapan) */}
             <div className="relative">

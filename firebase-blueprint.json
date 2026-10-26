@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "TakwimEntry": {
+      "title": "TakwimEntry",
+      "description": "Rekod acara atau aktiviti takwim persekolahan SK Tudan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik program" },
+        "tahun": { "type": "number", "description": "Tahun takwim persekolahan (2027)" },
+        "bulan": { "type": "number", "description": "Bulan takwim (1-12)" },
+        "bidangUtama": { "type": "string", "description": "Bidang utama (Kurikulum, HEM, dsb)" },
+        "unitUtama": { "type": "string", "description": "Unit atau panitia utama penganjur" },
+        "tajuk": { "type": "string", "description": "Nama program atau aktiviti", "maxLength": 250 },
+        "tarikhMula": { "type": "string", "description": "Tarikh mula (YYYY-MM-DD)" },
+        "tarikhAkhir": { "type": "string", "description": "Tarikh tamat (YYYY-MM-DD)" },
+        "masaMula": { "type": "string", "description": "Masa mula (HH:mm)" },
+        "masaAkhir": { "type": "string", "description": "Masa tamat (HH:mm)" },
+        "sepanjangHari": { "type": "boolean", "description": "Program sepanjang hari" },
+        "mingguAkademik": { "type": "string", "description": "Minggu akademik (M01-M42)" },
+        "statusHari": { "type": "string", "description": "Status persekolahan hari tersebut" },
+        "tempat": { "type": "string", "description": "Lokasi program", "maxLength": 150 },
+        "penyelaras": { "type": "string", "description": "Nama guru penyelaras", "maxLength": 150 },
+        "statusKelulusan": { "type": "string", "description": "Status kelulusan takwim" },
+        "statusPelaksanaan": { "type": "string", "description": "Status pelaksanaan aktiviti" },
+        "createdBy": { "type": "string", "description": "ID pengguna pencipta" },
+        "createdByName": { "type": "string", "description": "Nama pengguna pencipta" },
+        "createdAt": { "type": "string", "description": "Masa penciptaan rekod" },
+        "updatedBy": { "type": "string", "description": "ID pengemaskini terakhir" },
+        "updatedByName": { "type": "string", "description": "Nama pengemaskini terakhir" },
+        "updatedAt": { "type": "string", "description": "Masa kemaskini terakhir" }
+      },
+      "required": ["id", "tahun", "bulan", "bidangUtama", "tajuk", "tarikhMula", "tarikhAkhir", "tempat", "penyelaras"]
+    },
+    "HolidayRecord": {
+      "title": "HolidayRecord",
+      "description": "Rekod cuti sekolah, cuti umum Sarawak dan cuti persekutuan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik cuti" },
+        "nama": { "type": "string", "description": "Nama cuti", "maxLength": 150 },
+        "tarikhMula": { "type": "string", "description": "Tarikh mula (YYYY-MM-DD)" },
+        "tarikhAkhir": { "type": "string", "description": "Tarikh akhir (YYYY-MM-DD)" },
+        "negeri": { "type": "string", "description": "Kawasan / negeri" },
+        "kategori": { "type": "string", "description": "Kategori cuti" },
+        "sumber": { "type": "string", "description": "Surat pekeliling atau warta" },
+        "statusPengesahan": { "type": "string", "description": "Status pengesahan" }
+      },
+      "required": ["id", "nama", "tarikhMula", "tarikhAkhir", "kategori"]
+    },
+    "PanitiaConfig": {
+      "title": "PanitiaConfig",
+      "description": "Konfigurasi unit atau panitia mata pelajaran",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik panitia" },
+        "nama": { "type": "string", "description": "Nama panitia", "maxLength": 150 },
+        "kod": { "type": "string", "description": "Kod panitia", "maxLength": 20 },
+        "bidang": { "type": "string", "description": "Bidang berkaitan" },
+        "jenis": { "type": "string", "description": "Jenis unit atau panitia" },
+        "aktif": { "type": "boolean", "description": "Status keaktifan" },
+        "urutan": { "type": "number", "description": "Urutan susunan" },
+        "ketua": { "type": "string", "description": "Ketua panitia", "maxLength": 150 }
+      },
+      "required": ["id", "nama", "bidang", "aktif"]
+    },
+    "SchoolSettings": {
+      "title": "SchoolSettings",
+      "description": "Tetapan rasmi sekolah, pentadbir dan senarai guru",
+      "type": "object",
+      "properties": {
+        "schoolName": { "type": "string", "description": "Nama sekolah", "maxLength": 200 },
+        "schoolCode": { "type": "string", "description": "Kod sekolah", "maxLength": 20 },
+        "schoolLogo": { "type": "string", "description": "Logo sekolah" },
+        "schoolPhone": { "type": "string", "description": "No telefon sekolah" },
+        "schoolEmail": { "type": "string", "description": "E-mel rasmi sekolah" },
+        "updatedAt": { "type": "string", "description": "Tarikh kemaskini" }
+      },
+      "required": ["schoolName", "schoolCode"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil guru atau staf yang log masuk",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase UID pengguna" },
+        "email": { "type": "string", "description": "E-mel pengguna", "maxLength": 120 },
+        "name": { "type": "string", "description": "Nama guru", "maxLength": 150 },
+        "role": { "type": "string", "description": "Peranan dalam takwim (Pentadbir, Guru, dsb)" },
+        "jawatan": { "type": "string", "description": "Jawatan rasmi guru", "maxLength": 100 },
+        "lastLogin": { "type": "string", "description": "Masa log masuk terakhir" }
+      },
+      "required": ["uid", "email", "name"]
+    }
+  },
+  "firestore": {
+    "/takwim/{entryId}": {
+      "schema": "TakwimEntry",
+      "description": "Koleksi acara takwim persekolahan SK Tudan"
+    },
+    "/holidays/{holidayId}": {
+      "schema": "HolidayRecord",
+      "description": "Koleksi hari cuti persekolahan dan cuti am"
+    },
+    "/panitia/{panitiaId}": {
+      "schema": "PanitiaConfig",
+      "description": "Koleksi konfigurasi unit dan panitia sekolah"
+    },
+    "/settings/{settingsId}": {
+      "schema": "SchoolSettings",
+      "description": "Dokumen ketetapan rasmi sekolah"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Profil guru pengguna sistem"
+    }
+  }
+}

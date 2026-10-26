@@ -26,6 +26,7 @@ import { SKASInstrumentModal } from './components/SKASInstrumentModal';
 import { PLCActivityItem, SKASTUMSItem } from './types/plcAndSkas';
 import { Calendar, Table, RefreshCw, CheckCircle2, AlertCircle, Columns3, Sparkles, Upload, Trash2 } from 'lucide-react';
 import { ProgramSuggestion } from './constants/bankProgram';
+import { firebaseSync } from './services/firebaseSync';
 
 export default function App() {
   // Core Data States
@@ -110,6 +111,11 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+    // Test & initialize Firebase Firestore connection
+    firebaseSync.initConnection().catch((err) => {
+      console.warn('Firebase initial connection check:', err);
+    });
+
     // Live multi-device synchronization: poll every 4 seconds so all teachers immediately see updates
     const interval = setInterval(loadData, 4000);
     const handleFocus = () => loadData();
@@ -204,6 +210,7 @@ export default function App() {
   const handleDeleteEntry = async (id: string) => {
     try {
       await api.deleteEntry(id);
+      firebaseSync.deleteTakwimEntry(id).catch((e) => console.warn('Firebase entry deletion sync:', e));
       showToast('Program telah dipadamkan dan disimpan ke tong sampah.', 'success');
       loadData();
     } catch (err: any) {
@@ -212,6 +219,7 @@ export default function App() {
   };
 
   const handleEntrySaved = (saved: TakwimEntry) => {
+    firebaseSync.saveTakwimEntry(saved).catch((e) => console.warn('Firebase entry save sync:', e));
     showToast(`Program "${saved.tajuk}" berjaya disimpan ke pangkalan data sekolah!`, 'success');
     loadData();
   };

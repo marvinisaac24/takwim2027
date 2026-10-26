@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for Takwim Entries
+    function isValidTakwim(data) {
+      return data.keys().hasAll(['id', 'tahun', 'bulan', 'bidangUtama', 'tajuk', 'tarikhMula', 'tarikhAkhir', 'tempat', 'penyelaras']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.tahun is int &&
+        data.bulan is int && data.bulan >= 1 && data.bulan <= 12 &&
+        data.bidangUtama is string && data.bidangUtama.size() <= 100 &&
+        data.tajuk is string && data.tajuk.size() <= 300 &&
+        data.tarikhMula is string && data.tarikhMula.size() <= 30 &&
+        data.tarikhAkhir is string && data.tarikhAkhir.size() <= 30 &&
+        data.tempat is string && data.tempat.size() <= 200 &&
+        data.penyelaras is string && data.penyelaras.size() <= 200;
+    }
+
+    // Takwim collection
+    match /takwim/{entryId} {
+      allow read: if true; // School calendar is readable by school staff & community
+      allow create: if isSignedIn() && isValidId(entryId) && isValidTakwim(incoming());
+      allow update: if isSignedIn() && isValidId(entryId) && isValidTakwim(incoming());
+      allow delete: if isSignedIn() && isValidId(entryId);
+    }
+
+    // Holidays collection
+    match /holidays/{holidayId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(holidayId) &&
+        incoming().nama is string && incoming().nama.size() <= 200 &&
+        incoming().tarikhMula is string && incoming().tarikhAkhir is string;
+      allow delete: if isSignedIn() && isValidId(holidayId);
+    }
+
+    // Panitia collection
+    match /panitia/{panitiaId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(panitiaId) &&
+        incoming().nama is string && incoming().nama.size() <= 200;
+      allow delete: if isSignedIn() && isValidId(panitiaId);
+    }
+
+    // Settings collection
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(settingsId) &&
+        incoming().schoolName is string && incoming().schoolName.size() <= 250;
+      allow delete: if isSignedIn() && isValidId(settingsId);
+    }
+
+    // User profile isolation
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidId(userId) &&
+        incoming().uid == userId &&
+        incoming().email is string && incoming().email.size() <= 150;
+      allow delete: if isOwner(userId);
+    }
+
+    // Test connection doc
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
