@@ -120,9 +120,11 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
     pkPetang: settings.adminReviewers?.pkPetang || '',
   });
 
-  // Strict synchronization whenever modal is opened or settings change
+  const prevIsOpenRef = useRef(false);
+
+  // Initialize form fields ONLY when modal opens, preventing background polling from clobbering active edits
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setSchoolName(settings.schoolName || '');
       setSchoolCode(settings.schoolCode || '');
       setSchoolLogo(settings.schoolLogo || DEFAULT_SCHOOL_LOGO);
@@ -143,7 +145,9 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
       if (settings.salaryDates && settings.salaryDates.length > 0) {
         setSalaryList(settings.salaryDates);
       }
+      setStatusMsg(null);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, settings]);
 
   // Teachers List
@@ -343,22 +347,63 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle Logo Upload via FileReader
+  // Handle Logo Upload via FileReader & optimize with HTML5 Canvas (max 200px)
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setStatusMsg({ text: 'Saiz fail logo melebihi had 2MB.', type: 'error' });
+      if (file.size > 5 * 1024 * 1024) {
+        setStatusMsg({ text: 'Saiz fail logo melebihi had 5MB.', type: 'error' });
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setSchoolLogo(reader.result);
-          setStatusMsg({ text: 'Logo sekolah berjaya dimuat naik.', type: 'success' });
-        }
-      };
-      reader.readAsDataURL(file);
+
+      if (file.type.includes('svg')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            setSchoolLogo(reader.result);
+            setStatusMsg({ text: 'Logo sekolah berjaya dimuat naik (format vektor SVG).', type: 'success' });
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxDim = 200;
+              let width = img.width;
+              let height = img.height;
+              if (width > height) {
+                if (width > maxDim) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                }
+              } else {
+                if (height > maxDim) {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+                const optimizedDataUrl = canvas.toDataURL('image/png', 0.85);
+                setSchoolLogo(optimizedDataUrl);
+                setStatusMsg({ text: 'Logo sekolah berjaya dimuat naik dan dioptimumkan.', type: 'success' });
+              } else {
+                setSchoolLogo(reader.result as string);
+                setStatusMsg({ text: 'Logo sekolah berjaya dimuat naik.', type: 'success' });
+              }
+            };
+            img.src = reader.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -521,7 +566,7 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
   };
 
   // Save Settings to Backend
-  const handleSaveAll = async () => {
+  const handleSaveAll = async (closeAfter: boolean = false) => {
     setIsSaving(true);
     setStatusMsg(null);
 
@@ -542,9 +587,11 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
       const res = await api.updateSettings(updatedData);
       onSettingsUpdated(res.data);
       setStatusMsg({ text: 'Semua ketetapan sekolah berjaya disimpan dan disegerakkan!', type: 'success' });
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      if (closeAfter) {
+        setTimeout(() => {
+          onClose();
+        }, 800);
+      }
     } catch (err: any) {
       setStatusMsg({ text: err.message || 'Ralat menyimpan ketetapan sekolah.', type: 'error' });
     } finally {
@@ -574,12 +621,24 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleSaveAll(false)}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all border border-blue-400/30"
+              title="Simpan ketetapan sekarang"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isSaving ? 'Menyimpan...' : 'Simpan Ketetapan'}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation (7 Comprehensive Tabs) */}
@@ -817,6 +876,19 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Instant Save for Tab 1 */}
+              <div className="flex justify-end pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => handleSaveAll(false)}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan Profil & Logo Sekolah'}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -892,6 +964,19 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
                     className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+              </div>
+
+              {/* Instant Save for Tab 2 */}
+              <div className="flex justify-end pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => handleSaveAll(false)}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan Barisan Pentadbir'}</span>
+                </button>
               </div>
             </div>
           )}
@@ -1922,6 +2007,19 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
                   </tbody>
                 </table>
               </div>
+
+              {/* Instant Save for Tab 5 */}
+              <div className="flex justify-end pt-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => handleSaveAll(false)}
+                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan Senarai Guru'}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -2153,15 +2251,27 @@ export const SchoolSettingsModal: React.FC<SchoolSettingsModalProps> = ({
             Tutup
           </button>
 
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={handleSaveAll}
-            className="px-5 py-2 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-xl transition-all shadow-md shadow-blue-700/20 flex items-center gap-1.5"
-          >
-            <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Menyimpan...' : 'Simpan Semua Ketetapan Sekolah'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleSaveAll(false)}
+              className="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
+            >
+              <Save className="w-4 h-4 text-blue-700" />
+              <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleSaveAll(true)}
+              className="px-5 py-2 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-xl transition-all shadow-md shadow-blue-700/20 flex items-center gap-1.5"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Menyimpan...' : 'Simpan Semua & Tutup'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

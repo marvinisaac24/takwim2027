@@ -51,6 +51,8 @@ export default function App() {
   const [isPanitiaModalOpen, setIsPanitiaModalOpen] = useState<boolean>(false);
   const [settings, setSettings] = useState<SchoolSettings>(DEFAULT_SCHOOL_SETTINGS);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+  const isSettingsModalOpenRef = React.useRef(isSettingsModalOpen);
+  isSettingsModalOpenRef.current = isSettingsModalOpen;
   const [isCivicModalOpen, setIsCivicModalOpen] = useState<boolean>(false);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState<boolean>(false);
 
@@ -94,12 +96,14 @@ export default function App() {
       if (holidaysRes?.data) setHolidays(holidaysRes.data);
       if (panitiaRes?.data) setPanitiaList(panitiaRes.data);
       if (settingsRes?.data) {
-        setSettings(settingsRes.data);
-        const dynamicProfiles = getDynamicUserProfiles(settingsRes.data);
-        setCurrentUser((prevUser) => {
-          const updated = dynamicProfiles.find((u) => u.id === prevUser.id);
-          return updated || prevUser;
-        });
+        if (!isSettingsModalOpenRef.current) {
+          setSettings(settingsRes.data);
+          const dynamicProfiles = getDynamicUserProfiles(settingsRes.data);
+          setCurrentUser((prevUser) => {
+            const updated = dynamicProfiles.find((u) => u.id === prevUser.id);
+            return updated || prevUser;
+          });
+        }
       }
     } catch (err) {
       console.error('Error fetching data from server:', err);
@@ -566,6 +570,7 @@ export default function App() {
           settings={settings}
           onSettingsUpdated={(updated) => {
             setSettings(updated);
+            firebaseSync.saveSchoolSettings(updated).catch((e) => console.warn('Firebase settings sync:', e));
             showToast('Ketetapan sekolah berjaya disimpan.', 'success');
             loadData();
           }}
